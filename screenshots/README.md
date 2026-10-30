@@ -1,6 +1,6 @@
 # 📁 screenshots/ — evidence folder
 
-⚠️ **The numbered lab-setup images in this folder are PLACEHOLDERS** (the six `wireshark-lab-*.png` files are real captures). Each one is a labelled card describing exactly what the real screenshot must show. They exist so the repository layout, tables and image links in the main `README.md` can be reviewed before the real evidence is captured.
+⚠️ **The numbered lab-setup images in this folder are PLACEHOLDERS** (the eight `wireshark-lab-*.png` files are real captures). Each one is a labelled card describing exactly what the real screenshot must show. They exist so the repository layout, tables and image links in the main `README.md` can be reviewed before the real evidence is captured.
 
 **To finish the repository:** rebuild the lab on your own machine (or re-capture the hosted-lab screens), then **overwrite each file with your real PNG using the same file name**. No markdown edits are needed anywhere.
 
@@ -18,11 +18,9 @@ Full capture checklist, capture tools, redaction rules and quality self-check: *
 
 | File | Proves |
 | --- | --- |
-| `00-host-virtualization-enabled.png` | hardware virtualization is enabled *(optional)* |
 | `01-7zip-installed.png` | 7-Zip installed |
 | `02-virtualbox-version.png` | VirtualBox version |
 | `03-natnetwork-settings.png` | NAT Network `10.0.0.0/24`, DHCP, gateway `10.0.0.1` |
-| `04-kali-imported.png` | Kali imported into VirtualBox |
 | `04a-kali-sha256-check.png` | download integrity *(optional)* |
 | `05-shared-folder-settings.png` | `downloads` shared, auto-mount + permanent |
 | `05b-shared-folder-mounted.png` | `/media/sf_downloads` mounted in Kali |
@@ -40,7 +38,9 @@ Full capture checklist, capture tools, redaction rules and quality self-check: *
 | File | Proves |
 | --- | --- |
 | `wireshark-lab-1-attacker-ip.png` | Lab 1 — RST/ACK burst from the scanner, 8 service ports probed |
+| `wireshark-lab-1-host-services-http-https.png` | Lab 1 extra — `.20` serves HTTP:80 (`.31`) and TLS 1.2:443 (`.32`) => role confirmation |
 | `wireshark-lab-2-tcp-stream-chat.png` | Lab 2 — `tcp.stream eq 5` plaintext chat with passwords |
+| `wireshark-lab-2-tcp-stream-index.png` | Lab 2 extra — frame 87 `[Stream index: 5]`, custom service on TCP `5000` |
 | `wireshark-lab-3-tcp-stream-http-download.png` | Lab 3 — `tcp.stream eq 11`, `GET /download/report.txt` |
 | `wireshark-lab-4-http-credentials.png` | Lab 4 — `tcp.stream eq 4`, login form + `POST /login` |
 | `wireshark-lab-5-bruteforce-ftp.png` | Lab 5 — `tcp.stream eq 13`, FTP guesses → `230 Login successful` |

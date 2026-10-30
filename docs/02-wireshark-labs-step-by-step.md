@@ -391,6 +391,35 @@ Displayed: 37 of 309 packets (12.0 %)
 > ```
 > If that returns the matching SYN packets, `192.168.10.66` is unambiguously the scanner and the RST filter above is simply the *reply* view of the same scan.
 
+#### Role confirmation — the scanned host is a web server
+
+![Lab 1 extra: ip.src == 192.168.10.20 showing HTTP port 80 to .31 and TLS 1.2 port 443 to .32](../screenshots/wireshark-lab-1-host-services-http-https.png)
+
+```text
+Filter:  ip.src == 192.168.10.20
+Displayed: 116 of 309 packets (37.5 %)
+```
+
+| Frame | Flow | What it is |
+| :---: | --- | --- |
+| 8 | `.20:80` → `.31:50100` `[SYN, ACK]` `MSS=1460` | the server accepts an HTTP connection |
+| 12 | `.20:80` → `.31:50100` `HTTP/1.1 200 OK (text/html)` | page served — in the clear |
+| 15 | `.20:80` → `.31:50100` `[FIN, ACK]` | connection closed cleanly |
+| 22 | `.20:443` → `.32:50113` `[SYN, ACK]` | the server accepts a **TLS** connection |
+| 25 | `.20:443` → `.32:50113` `TLSv1.2 · Server Hello` | handshake only — no readable content |
+| 26–27 | `.20:443` → `.32:50113` `Len=1380` `[TCP segment of a reassembled PDU]` | encrypted payload |
+
+**What this adds.** The same host answers on **`80` (HTTP) and `443` (TLS 1.2)** for two different clients, so `192.168.10.20` is confirmed as a **service provider**, not a scanner — which is exactly the role attribution the first screenshot needed. It also shows the contrast the whole module is built on:
+
+| | Port 80 (HTTP) | Port 443 (HTTPS) |
+| --- | --- | --- |
+| Request / response line | ✅ visible (`GET`, `200 OK`) | ❌ encrypted |
+| Hostname / URI | ✅ visible | ⚠️ SNI only |
+| Body / credentials | ✅ fully readable | ❌ opaque |
+| What an analyst can prove | everything | metadata only |
+
+That is the argument for Lab 4's finding: the portal on port 80 leaks credentials because the traffic is not encrypted.
+
 ---
 
 ### Lab 2 — Follow TCP Stream 1
@@ -427,6 +456,31 @@ Sara:            Bye Ali. Your ticket number is HD-20931.
 | Stream | `tcp.stream eq 5` (9 turns) |
 
 **Why this is a finding, not trivia:** credentials and an internal Wi-Fi PSK travelled in clear text over a chat protocol with no encryption. Anyone able to capture that segment (a mirrored port, a rogue AP, an ARP-spoofed host — all normal in this lab) gets working access. **Fix:** TLS on the chat service, a secrets/ticketing workflow instead of pasting passwords in chat, and rotation of both leaked secrets.
+
+#### Stream 5 on the wire — the chat runs on TCP/5000
+
+![Lab 2 extra: tcp.stream eq 5 packet list, frame 87 selected, stream index 5, port 5000](../screenshots/wireshark-lab-2-tcp-stream-index.png)
+
+```text
+Filter:   tcp.stream eq 5
+Frame 87: 192.168.10.20:5000 → 192.168.10.45:49731   TCP   54 bytes
+Details:  Source Port: 5000 · Destination Port: 49731 · [Stream index: 5]
+Displayed: 24 of 246 packets (9.8 %)
+```
+
+| Frame | Flow | Meaning |
+| :---: | --- | --- |
+| 81 | `.45:49731` → `.20:5000` `[SYN]` | client opens the connection |
+| 82 | `.20:5000` → `.45:49731` `[SYN, ACK]` | server accepts |
+| 83 | `.45:49731` → `.20:5000` `[ACK]` | handshake complete |
+| 84, 86 | `.45` → `.20` `[PSH, ACK]` `Len=29`, `Len=64` | the client's chat lines |
+| 87 | `.20:5000` → `.45:49731` `[ACK]` `Len=0` | pure acknowledgement — **frame 87 is where `[Stream index: 5]` is read** |
+| 88 | `.20` → `.45` `[PSH, ACK]` `Len=53` | the server's reply |
+
+**What this adds.** The conversation is a **custom application on TCP port `5000`** — not HTTP, not a known service — which is why no dissector decoded it and why you must use **Follow → TCP Stream** to read it. It also fixes the direction of the conversation: `192.168.10.45` is the **client** (Ali's workstation) and `192.168.10.20` is the **server** running Office Chat (Sara's IT side) — the same host that later appears as the web server in Lab 1 and the intranet server in Lab 3.
+
+> 💡 Port `5000` is worth remembering during a scan: a non-standard listener on a high port is exactly the kind of service that hides from a quick glance at `Statistics → Protocol Hierarchy`.
+
 
 ---
 

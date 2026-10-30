@@ -47,11 +47,9 @@ Save into `screenshots/`. The middle column is what a grader must be able to rea
 
 | File name | Window to open | Must be legible |
 | --- | --- | --- |
-| `00-host-virtualization-enabled.png` *(optional)* | Task Manager → Performance → CPU | `Virtualization: Enabled` |
 | `01-7zip-installed.png` | File Explorer right-click menu, or 7-Zip **About** | 7-Zip present / version |
 | `02-virtualbox-version.png` | VirtualBox **Help → About** + terminal `VBoxManage --version` | version string |
 | `03-natnetwork-settings.png` | **File → Tools → Network Manager → NAT Networks** | name `NatNetwork`, `10.0.0.0/24`, DHCP ticked, gateway `10.0.0.1` |
-| `04-kali-imported.png` | VirtualBox Manager with Kali selected | VM name, OS type *Debian (64-bit)*, state |
 | `04a-kali-sha256-check.png` *(optional)* | terminal with `certutil -hashfile` output | hash + file name |
 | `05-shared-folder-settings.png` | **Settings → Shared Folders** | `downloads`, path, **Auto-mount ✔**, **Make Permanent ✔** |
 | `05b-shared-folder-mounted.png` | Kali terminal `ls -l /media/sf_downloads` | real host files listed |
@@ -82,7 +80,9 @@ If you can only capture four, capture these — one per written requirement:
 | File | Lab | What it proves |
 | --- | --- | --- |
 | `wireshark-lab-1-attacker-ip.png` | 1 — Identify the Attacker's IP | `RST, ACK` burst, 8 service ports probed, `192.168.10.66` → `192.168.10.20` |
+| `wireshark-lab-1-host-services-http-https.png` | 1 — role confirmation | `.20` serves HTTP `80` to `.31` and TLS 1.2 `443` to `.32` |
 | `wireshark-lab-2-tcp-stream-chat.png` | 2 — Follow TCP Stream 1 | `tcp.stream eq 5`, plaintext chat with temp password, guest Wi-Fi PSK, ticket |
+| `wireshark-lab-2-tcp-stream-index.png` | 2 — stream on the wire | frame 87 `[Stream index: 5]`, custom service on TCP `5000`, client `.45` → server `.20` |
 | `wireshark-lab-3-tcp-stream-http-download.png` | 3 — Follow TCP Stream, Part 2 | `tcp.stream eq 11`, `GET /download/report.txt` on `intranet.company.local` |
 | `wireshark-lab-4-http-credentials.png` | 4 — HTTP Plain Text Credentials | `tcp.stream eq 4`, login form + `POST /login` urlencoded body |
 | `wireshark-lab-5-bruteforce-ftp.png` | 5 — Catch the Brute Force Attacker | `tcp.stream eq 13`, 4 × `530` then `230 Login successful` |
@@ -166,11 +166,9 @@ cp ~/Pictures/*.png /media/sf_downloads/screenshots/
 
 ```text
 screenshots/
-├── 00-host-virtualization-enabled.png
 ├── 01-7zip-installed.png
 ├── 02-virtualbox-version.png
 ├── 03-natnetwork-settings.png
-├── 04-kali-imported.png
 ├── 04a-kali-sha256-check.png
 ├── 05-shared-folder-settings.png
 ├── 05b-shared-folder-mounted.png
@@ -184,7 +182,9 @@ screenshots/
 ├── 12-ping-test-target-vm.png
 ├── 99-submission-confirmed.png
 ├── wireshark-lab-1-attacker-ip.png            ← real capture
+├── wireshark-lab-1-host-services-http-https.png ← real capture
 ├── wireshark-lab-2-tcp-stream-chat.png        ← real capture
+├── wireshark-lab-2-tcp-stream-index.png       ← real capture
 ├── wireshark-lab-3-tcp-stream-http-download.png ← real capture
 ├── wireshark-lab-4-http-credentials.png       ← real capture
 ├── wireshark-lab-5-bruteforce-ftp.png         ← real capture
@@ -235,7 +235,7 @@ For side-by-side proof use an HTML table:
 
 ## 9 · Quality self-check before submitting
 
-- [ ] Every mandatory file in §3 exists (16 for the lab) and all 6 Wireshark captures + 6 completion screens
+- [ ] Every mandatory file in §3 exists (14 for the lab) and all 8 Wireshark captures + 6 completion screens
 - [ ] Each file matches its required content column — open it and re-read
 - [ ] No personal data visible; lab `10.0.0.x` addresses still visible
 - [ ] Images are PNG, under ~2 MB, readable at 100 % zoom

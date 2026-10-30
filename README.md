@@ -211,8 +211,6 @@ certutil -hashfile kali-linux-*-virtualbox-amd64.7z SHA256
 6. In **Settings → System**, give the VM **2048–4096 MB RAM** and **2 CPUs**.
 7. Start the VM. Default credentials of the pre-built image are `kali` / `kali` — **change the password.**
 
-![](screenshots/04-kali-imported.png)
-
 ---
 
 ## Step 5 — Clipboard, Drag & Drop and the Shared Folder
@@ -397,6 +395,10 @@ Filter `ip.src == 192.168.10.20 and ip.dst == 192.168.10.66 and tcp.flags.reset 
 
 ![Lab 1 — RST,ACK replies to a port scan](screenshots/wireshark-lab-1-attacker-ip.png)
 
+Role check on the same target host (`ip.src == 192.168.10.20`): it answers on **`80`** for `.31` (`HTTP/1.1 200 OK text/html`) and on **`443`** for `.32` (`TLSv1.2 Server Hello`) — a service provider, not a scanner. It also shows the whole point of encryption: the HTTP session is readable, the TLS one is not.
+
+![Lab 1 extra — host 192.168.10.20 serving HTTP on 80 and TLS 1.2 on 443](screenshots/wireshark-lab-1-host-services-http-https.png)
+
 ## Lab 2 — Follow TCP Stream 1
 
 `tcp.stream eq 5` rebuilds a 9-turn "Office Chat v1.2" conversation. Credentials travelled in the clear:
@@ -409,6 +411,10 @@ Sara:        Bye Ali. Your ticket number is HD-20931.
 ```
 
 ![Lab 2 — Follow TCP Stream eq 5, plaintext chat with passwords](screenshots/wireshark-lab-2-tcp-stream-chat.png)
+
+On the wire, `tcp.stream eq 5` is a **custom service on TCP `5000`** (no dissector, hence Follow → TCP Stream). Frame 87 shows `[Stream index: 5]`, and the handshake fixes the roles: `192.168.10.45:49731` is the client (Ali), `192.168.10.20:5000` is the server (Office Chat / IT).
+
+![Lab 2 extra — tcp.stream eq 5, frame 87, Stream index 5, port 5000](screenshots/wireshark-lab-2-tcp-stream-index.png)
 
 ## Lab 3 — Follow TCP Stream, Part 2
 

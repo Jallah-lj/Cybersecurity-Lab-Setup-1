@@ -63,9 +63,6 @@ wmic cpu get name
 
 Write down: host OS + version, RAM, CPU. These go into the *Lab Configuration* table of the README.
 
-> ⬛ **SCREENSHOT #00 (optional):** the *Task Manager → Performance → CPU* screen showing `Virtualization: Enabled`. Helpful proof if a grader asks why virtualization matters.
-> Save as `screenshots/00-host-virtualization-enabled.png`.
-
 ---
 
 ## Step 1 — Install 7-Zip
@@ -228,9 +225,6 @@ passwd
 ```
 
 **Expected result:** a Kali XFCE desktop, and the top-right network icon shows a wired connection.
-
-> ⬛ **SCREENSHOT #04:** the VirtualBox Manager with the Kali VM listed (and, if possible, the Kali desktop beside it).
-> Save as `screenshots/04-kali-imported.png`.
 
 ---
 
@@ -635,7 +629,6 @@ Minimum set for WK1-PM1:
 | 01 | `01-7zip-installed.png` | 7-Zip present |
 | 02 | `02-virtualbox-version.png` | VirtualBox version |
 | 03 | `03-natnetwork-settings.png` | NatNetwork `10.0.0.0/24`, DHCP |
-| 04 | `04-kali-imported.png` | Kali VM in VirtualBox |
 | 05 | `05-shared-folder-settings.png` | `downloads`, auto-mount |
 | 05b | `05b-shared-folder-mounted.png` | `/media/sf_downloads` with host files |
 | 06 | `06-clipboard-dragdrop.png` | both **Bidirectional** |
