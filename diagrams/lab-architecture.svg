@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="kali" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2b1b3d"/>
+      <stop offset="100%" stop-color="#40215c"/>
+    </linearGradient>
+    <linearGradient id="host" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#12263a"/>
+      <stop offset="100%" stop-color="#0f1c2b"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#58a6ff"/>
+    </marker>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1400" height="860" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="700" y="52" text-anchor="middle" fill="#e6edf3" font-size="30" font-weight="700">Cybersecurity Lab Architecture</text>
+  <text x="700" y="84" text-anchor="middle" fill="#8b949e" font-size="16">VirtualBox 7.x · NAT Network 10.0.0.0/24 · Kali Linux attack platform</text>
+
+  <!-- HOST CONTAINER -->
+  <rect x="60" y="120" width="900" height="620" rx="18" fill="url(#host)" stroke="#1f6feb" stroke-width="2" stroke-dasharray="9 6"/>
+  <text x="88" y="158" fill="#58a6ff" font-size="19" font-weight="700">HOST LAPTOP / PC</text>
+  <text x="88" y="184" fill="#8b949e" font-size="14">Windows 10/11 · 8 GB+ RAM · VT-x / AMD-V enabled · VirtualBox 7.x</text>
+  <text x="88" y="206" fill="#8b949e" font-size="14">Shared folder: C:\Users\&lt;you&gt;\Downloads  →  /media/sf_downloads</text>
+
+  <!-- NAT Network bar -->
+  <rect x="110" y="232" width="800" height="66" rx="12" fill="#0b2c3d" stroke="#1f9e8f" stroke-width="2"/>
+  <text x="510" y="260" text-anchor="middle" fill="#4dd4c4" font-size="17" font-weight="700">VirtualBox NAT Network — “NatNetwork”</text>
+  <text x="510" y="284" text-anchor="middle" fill="#a9d6d1" font-size="14">Subnet 10.0.0.0/24 · Gateway 10.0.0.1 · DHCP on (.3 – .99) · IPv4 only</text>
+
+  <!-- Connectors to NAT bar -->
+  <line x1="270" y1="352" x2="270" y2="300" stroke="#58a6ff" stroke-width="2.5"/>
+  <line x1="610" y1="352" x2="610" y2="300" stroke="#8b949e" stroke-width="2" stroke-dasharray="5 5"/>
+  <line x1="830" y1="352" x2="830" y2="300" stroke="#8b949e" stroke-width="2" stroke-dasharray="5 5"/>
+
+  <!-- KALI VM -->
+  <rect x="120" y="352" width="300" height="250" rx="14" fill="url(#kali)" stroke="#c084fc" stroke-width="2.5" filter="url(#glow)"/>
+  <text x="270" y="386" text-anchor="middle" fill="#f0abfc" font-size="19" font-weight="700">KALI LINUX</text>
+  <text x="270" y="410" text-anchor="middle" fill="#e9d5ff" font-size="13">Attacker / analyst machine</text>
+  <line x1="150" y1="424" x2="390" y2="424" stroke="#7e3fa8" stroke-width="1"/>
+  <text x="150" y="454" fill="#f5d0fe" font-size="15" font-weight="700">IP: 10.0.0.2/24</text>
+  <text x="150" y="480" fill="#ddd6fe" font-size="14">Mask: 255.255.255.0</text>
+  <text x="150" y="504" fill="#ddd6fe" font-size="14">Gateway: 10.0.0.1</text>
+  <text x="150" y="528" fill="#ddd6fe" font-size="14">DNS: 8.8.8.8 / 1.1.1.1</text>
+  <text x="150" y="552" fill="#ddd6fe" font-size="14">RAM: 2048–4096 MB</text>
+  <text x="150" y="576" fill="#4dd4c4" font-size="13">✔ Full Internet access verified</text>
+
+  <!-- Optional VMs -->
+  <rect x="490" y="352" width="190" height="120" rx="12" fill="#1a2233" stroke="#30363d" stroke-width="1.6"/>
+  <text x="585" y="382" text-anchor="middle" fill="#c9d1d9" font-size="14" font-weight="700">Ubuntu / Server</text>
+  <text x="585" y="406" text-anchor="middle" fill="#8b949e" font-size="13">10.0.0.7/24</text>
+  <text x="585" y="430" text-anchor="middle" fill="#6e7681" font-size="12">optional target</text>
+
+  <rect x="710" y="352" width="190" height="120" rx="12" fill="#1a2233" stroke="#30363d" stroke-width="1.6"/>
+  <text x="805" y="382" text-anchor="middle" fill="#c9d1d9" font-size="14" font-weight="700">Windows 10</text>
+  <text x="805" y="406" text-anchor="middle" fill="#8b949e" font-size="13">10.0.0.10/24</text>
+  <text x="805" y="430" text-anchor="middle" fill="#6e7681" font-size="12">optional target</text>
+
+  <rect x="710" y="496" width="190" height="106" rx="12" fill="#1a2233" stroke="#30363d" stroke-width="1.6"/>
+  <text x="805" y="526" text-anchor="middle" fill="#c9d1d9" font-size="14" font-weight="700">Android 9x</text>
+  <text x="805" y="550" text-anchor="middle" fill="#8b949e" font-size="13">10.0.0.11/24</text>
+  <text x="805" y="574" text-anchor="middle" fill="#6e7681" font-size="12">optional target</text>
+
+  <rect x="490" y="496" width="190" height="106" rx="12" fill="#1a2233" stroke="#30363d" stroke-width="1.6"/>
+  <text x="585" y="526" text-anchor="middle" fill="#c9d1d9" font-size="14" font-weight="700">Windows Server 2016</text>
+  <text x="585" y="550" text-anchor="middle" fill="#8b949e" font-size="13">10.0.0.9/24</text>
+  <text x="585" y="574" text-anchor="middle" fill="#6e7681" font-size="12">optional target</text>
+
+  <!-- Snapshot / feature strip -->
+  <rect x="120" y="634" width="780" height="76" rx="12" fill="#0f2419" stroke="#238636" stroke-width="1.8"/>
+  <text x="150" y="664" fill="#3fb950" font-size="15" font-weight="700">VM CONFIGURATION</text>
+  <text x="150" y="690" fill="#a7d8b0" font-size="13.5">Shared Clipboard: Bidirectional  ·  Drag &amp; Drop: Bidirectional  ·  Shared Folder: downloads (auto-mount)  ·  Snapshot: “01-Clean-Kali”</text>
+
+  <!-- Internet cloud -->
+  <ellipse cx="1180" cy="266" rx="150" ry="86" fill="#0d1117" stroke="#58a6ff" stroke-width="2.5"/>
+  <text x="1180" y="252" text-anchor="middle" fill="#e6edf3" font-size="20" font-weight="700">INTERNET</text>
+  <text x="1180" y="280" text-anchor="middle" fill="#8b949e" font-size="13">kali.org · apt update</text>
+  <text x="1180" y="300" text-anchor="middle" fill="#8b949e" font-size="13">nmap · wireshark</text>
+
+  <line x1="1020" y1="266" x2="910" y2="266" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="965" y="252" text-anchor="middle" fill="#58a6ff" font-size="12">NAT / PAT</text>
+  <text x="965" y="292" text-anchor="middle" fill="#6e7681" font-size="12">host public IP</text>
+
+  <!-- Legend -->
+  <text x="1180" y="410" text-anchor="middle" fill="#8b949e" font-size="13">Everything on 10.0.0.0/24 is</text>
+  <text x="1180" y="432" text-anchor="middle" fill="#8b949e" font-size="13">isolated inside the hypervisor.</text>
+  <text x="1180" y="458" text-anchor="middle" fill="#f0883e" font-size="13" font-weight="700">Test only what you own</text>
+  <text x="1180" y="478" text-anchor="middle" fill="#f0883e" font-size="13" font-weight="700">or have written permission for.</text>
+
+  <!-- Footer -->
+  <text x="700" y="806" text-anchor="middle" fill="#6e7681" font-size="13">Networkwalks · Cybersecurity Internship · Week 01 — WK1-PM1: Lab Setup (VirtualBox + Kali Linux)</text>
+</svg>
