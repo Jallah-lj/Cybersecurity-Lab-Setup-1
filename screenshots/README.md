@@ -1,53 +1,26 @@
-# 📁 screenshots/ — evidence folder
+# 📁 screenshots/ — evidence
 
-⚠️ **The numbered lab-setup images in this folder are PLACEHOLDERS** (the eight `wireshark-lab-*.png` files are real captures). Each one is a labelled card describing exactly what the real screenshot must show. They exist so the repository layout, tables and image links in the main `README.md` can be reviewed before the real evidence is captured.
+This folder contains **only real captures** from the six Wireshark SOC labs (WK1-PMx). There are no placeholder or mock-up images anywhere in this repository.
 
-**To finish the repository:** rebuild the lab on your own machine (or re-capture the hosted-lab screens), then **overwrite each file with your real PNG using the same file name**. No markdown edits are needed anywhere.
+## Wireshark / SOC lab evidence (WK1-PMx)
 
-```text
-Replace  screenshots/03-natnetwork-settings.png
-with     your real capture of Network Manager → NAT Networks
-keep     the same file name
-```
+| File | Lab | What it proves |
+| --- | --- | --- |
+| `wireshark-lab-1-attacker-ip.png` | 1 — Identify the Attacker's IP | `RST, ACK` burst, 8 service ports probed, `192.168.10.66` → `192.168.10.20` in ~110 ms |
+| `wireshark-lab-1-host-services-http-https.png` | 1 — role confirmation | `.20` serves HTTP `80` to `.31` (`200 OK text/html`) and TLS 1.2 `443` to `.32` (`Server Hello`) |
+| `wireshark-lab-2-tcp-stream-chat.png` | 2 — Follow TCP Stream 1 | `tcp.stream eq 5`, plaintext chat: temp password, guest Wi-Fi PSK, ticket number |
+| `wireshark-lab-2-tcp-stream-index.png` | 2 — stream on the wire | frame 87 `[Stream index: 5]`, custom service on TCP `5000`, client `.45` → server `.20` |
+| `wireshark-lab-3-tcp-stream-http-download.png` | 3 — Follow TCP Stream, Part 2 | `tcp.stream eq 11`, `GET /download/report.txt` on `intranet.company.local` |
+| `wireshark-lab-4-http-credentials.png` | 4 — HTTP Plain Text Credentials | `tcp.stream eq 4`, login form + `POST /login` urlencoded body |
+| `wireshark-lab-5-bruteforce-ftp.png` | 5 — Catch the Brute Force Attacker | `tcp.stream eq 13`, 4 × `530` then `230 Login successful` |
+| `wireshark-lab-6-voip-rtp-player.png` | 6 — Catch the Call Scammer | RTP Player, 2 × G.711 PCMU, 24 s call between `.45` and `.52` |
 
-Full capture checklist, capture tools, redaction rules and quality self-check: **[../docs/03-screenshot-evidence-guide.md](../docs/03-screenshot-evidence-guide.md)**
+Full analysis of each capture: **[../docs/02-wireshark-labs-step-by-step.md §9](../docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs)**.
 
----
+## Why there are no lab-build screenshots
 
-## Mandatory evidence (WK1-PM1)
+The VirtualBox + Kali build was completed on the program's **hosted lab platform**, which does not permit screenshots from inside the environment. The README proves every requirement instead with the exact setting and the console output it produces — `VBoxManage list natnets`, `ip -4 addr show eth0`, `ping 8.8.8.8`, `ls -l /media/sf_downloads`, and so on.
 
-| File | Proves |
-| --- | --- |
-| `01-7zip-installed.png` | 7-Zip installed |
-| `02-virtualbox-version.png` | VirtualBox version |
-| `03-natnetwork-settings.png` | NAT Network `10.0.0.0/24`, DHCP, gateway `10.0.0.1` |
-| `04a-kali-sha256-check.png` | download integrity *(optional)* |
-| `05-shared-folder-settings.png` | `downloads` shared, auto-mount + permanent |
-| `05b-shared-folder-mounted.png` | `/media/sf_downloads` mounted in Kali |
-| `06-clipboard-dragdrop.png` | clipboard **and** drag-and-drop = Bidirectional |
-| `07-network-adapter.png` | adapter attached to NAT Network `NatNetwork` |
-| `08-kali-static-ip.png` | `10.0.0.2/24` + default gateway `10.0.0.1` |
-| `08b-kali-ip-gui.png` | same values set through the GUI |
-| `09-verification-terminal.png` | gateway, Internet, DNS, `apt update`, nmap |
-| `10-clipboard-bidirectional.png` | clipboard works both directions |
-| `11-clean-snapshot.png` | snapshot `01-Clean-Kali-Network-Baseline` |
-| `12-ping-test-target-vm.png` | optional Phase-2 target VM reachable |
+If you rebuild the lab on your own machine, **[../docs/03-screenshot-evidence-guide.md](../docs/03-screenshot-evidence-guide.md)** lists exactly which windows to capture and what must be legible in each.
 
-## Wireshark / SOC lab evidence (WK1-PMx) — ✅ real captures
-
-| File | Proves |
-| --- | --- |
-| `wireshark-lab-1-attacker-ip.png` | Lab 1 — RST/ACK burst from the scanner, 8 service ports probed |
-| `wireshark-lab-1-host-services-http-https.png` | Lab 1 extra — `.20` serves HTTP:80 (`.31`) and TLS 1.2:443 (`.32`) => role confirmation |
-| `wireshark-lab-2-tcp-stream-chat.png` | Lab 2 — `tcp.stream eq 5` plaintext chat with passwords |
-| `wireshark-lab-2-tcp-stream-index.png` | Lab 2 extra — frame 87 `[Stream index: 5]`, custom service on TCP `5000` |
-| `wireshark-lab-3-tcp-stream-http-download.png` | Lab 3 — `tcp.stream eq 11`, `GET /download/report.txt` |
-| `wireshark-lab-4-http-credentials.png` | Lab 4 — `tcp.stream eq 4`, login form + `POST /login` |
-| `wireshark-lab-5-bruteforce-ftp.png` | Lab 5 — `tcp.stream eq 13`, FTP guesses → `230 Login successful` |
-| `wireshark-lab-6-voip-rtp-player.png` | Lab 6 — RTP Player, two G.711 PCMU streams |
-| `99-submission-confirmed.png` | submission form confirmation *(placeholder)* |
-
-> Still missing: one **completion screen** per lab — `wireshark-lab-1-complete.png` … `wireshark-lab-6-complete.png` — showing all 10 tasks answered. Nothing else is needed for the Wireshark module.
-
-> 🔒 **Before publishing:** three screenshots contain credential-like strings (`Tiger#4821`, `BlueHarbor77`, `Sunshine99`). They belong to a training capture, so they are safe to publish — but if you reuse these images in a public post, say clearly that they come from an isolated lab capture and are not production secrets.
-
+> 🔒 Three captures contain training credentials (`Tiger#4821`, `BlueHarbor77`, `Sunshine99`). They are lab values from an isolated capture, so they are safe to publish — but say so if you reuse the images in a social post.

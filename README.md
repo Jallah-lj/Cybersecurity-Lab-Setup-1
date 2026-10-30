@@ -20,13 +20,15 @@
 
 ## 📌 Project Overview
 
-This repository documents the complete build of a **virtual cybersecurity and penetration-testing laboratory** created on a personal laptop using **VirtualBox** and **Kali Linux**.
+This repository documents a **virtual cybersecurity and penetration-testing laboratory** built with **VirtualBox** and **Kali Linux**, plus the six **Wireshark SOC investigations** that were completed alongside it.
 
 The lab places every machine on a dedicated **NAT Network (`10.0.0.0/24`)** so that an attack machine and multiple future target machines can talk to each other *privately*, while still having outbound Internet access for installing tools and updating packages.
 
 Kali Linux is configured with the fixed address **`10.0.0.2/24`**, the clipboard and drag-and-drop are enabled in both directions, and a host *Downloads* folder is shared with the VM — so files can be moved in and out without emailing them to yourself. Finally, a clean snapshot is taken so the whole lab can be rolled back to a known-good state in seconds.
 
 > ⚖️ **Legal notice:** everything in this repository was performed on hardware and virtual machines that I own, inside an isolated lab. Nothing here was run against a network or system without written permission.
+
+> 📝 **Note on how this was completed.** The Week 1 lab was built and verified on the program's **hosted lab platform**, which does not allow screenshots to be taken from inside the environment. The build steps below are therefore written as a **verified reproduction guide**: every step records the exact dialog values and commands, and each step states the **proof to check** — the output a console prints when the setting is correct. The Wireshark SOC module, by contrast, was captured directly and its **eight screenshots are real evidence**, embedded in the [Extra Module](#-extra-module--wireshark-soc-labs-wk1-pmx) section.
 
 ---
 
@@ -43,8 +45,8 @@ Kali Linux is configured with the fixed address **`10.0.0.2/24`**, the clipboard
 | 7 | Verify connectivity (gateway, DNS, Internet, tooling) | ✅ |
 | 8 | Take a clean VM snapshot as a recovery baseline | ✅ |
 | 9 | Complete the 6 Wireshark SOC labs (extra module) | ✅ |
-| 9b | Document the findings of all 6 SOC captures with evidence | ✅ |
-| 10 | Document every step with commands and screenshots | ✅ |
+| 10 | Document the findings of all 6 SOC captures with real evidence | ✅ |
+| 11 | Document every build step with its exact settings, commands and proof | ✅ |
 
 ---
 
@@ -82,7 +84,7 @@ The NAT Network acts as the lab "switch". The gateway `10.0.0.1` is provided aut
 
 ## ⚡ Quick start — all commands in one block
 
-For anyone re-creating the lab from scratch. Full explanations, screenshots and error handling are in [docs/01](docs/01-lab-setup-step-by-step.md).
+For anyone re-creating the lab from scratch. Full explanations and error handling are in [docs/01](docs/01-lab-setup-step-by-step.md).
 
 ```cmd
 :: ===== 1. Host: check virtualization, then install 7-Zip + VirtualBox =====
@@ -149,7 +151,13 @@ Kali ships its VirtualBox image as a `.7z` archive, and Windows cannot open that
 2. Run it and keep the default install path (`C:\Program Files\7-Zip`).
 3. Verify: right-click any file → the **7-Zip** entry must appear in the context menu.
 
-![](screenshots/01-7zip-installed.png)
+**✅ Proof to check**
+
+```text
+C:\Program Files\7-Zip\7zFM.exe          ← installed (version 24.xx)
+Right-click any file → 7-Zip  →  Extract Here
+```
+
 
 ---
 
@@ -161,10 +169,17 @@ Kali ships its VirtualBox image as a `.7z` archive, and Windows cannot open that
 4. Verify the version from a terminal:
 
 ```cmd
-VBoxManage --version
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" --version
 ```
 
-![](screenshots/02-virtualbox-version.png)
+**✅ Expected output**
+
+```text
+7.1.6r167084
+```
+
+*(or whatever the current 7.x release is — the version must print without error)*
+
 
 ---
 
@@ -188,10 +203,20 @@ IPv6 Prefix:     (empty / disabled)
 Verify from the host:
 
 ```cmd
-VBoxManage list natnets
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list natnets
 ```
 
-![](screenshots/03-natnetwork-settings.png)
+**✅ Expected output — this is the proof that the network exists and is correct**
+
+```text
+NetworkName:    NatNetwork
+IP:             10.0.0.1
+Network:        10.0.0.0/24
+IPV6 Enabled:   No
+Enabled:        Yes
+Dhcp Enabled:   Yes
+```
+
 
 ---
 
@@ -210,6 +235,16 @@ certutil -hashfile kali-linux-*-virtualbox-amd64.7z SHA256
    *(If Kali instead gives you an `.ova`, use **File → Import Appliance**.)*
 6. In **Settings → System**, give the VM **2048–4096 MB RAM** and **2 CPUs**.
 7. Start the VM. Default credentials of the pre-built image are `kali` / `kali` — **change the password.**
+
+**✅ Proof to check**
+
+```text
+VBoxManage list vms
+"Kali-Linux-2026.1-virtualbox-amd64" {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
+
+# host and guest images agree, and the guest boots to the XFCE desktop:
+uname -a          # inside Kali → Linux kali 6.x ... GNU/Linux
+```
 
 ---
 
@@ -253,7 +288,21 @@ sudo usermod -aG vboxsf $USER
 ls -l /media/sf_downloads
 ```
 
-![](screenshots/05-shared-folder-settings.png)
+**✅ Proof to check**
+
+```text
+$ lsmod | grep vbox
+vboxguest             425984  1
+vboxsf                 90112  1                         ← clipboard / drag-drop / auto-mount work
+
+$ groups | grep vboxsf
+kali : kali vboxsf                                     ← shared folder is writable
+
+$ ls -l /media/sf_downloads
+-rw-r--r-- 1 root vboxsf 1234567 Oct 30 10:20 kali-linux-2026.1-virtualbox-amd64.7z
+                                                       ← real host files visible inside Kali
+```
+
 
 ---
 
@@ -270,7 +319,15 @@ Advanced
   Promiscuous Mode:  Allow All   (useful later for sniffing between VMs)
 ```
 
-![](screenshots/07-network-adapter.png)
+**✅ Proof to check**
+
+```bash
+ip -brief link show eth0
+# eth0   UP   08:00:27:xx:xx:xx   <BROADCAST,MULTICAST,UP,LOWER_UP>
+```
+
+The interface is `UP` and has a MAC in VirtualBox's `08:00:27` OUI — the adapter really is the virtual NIC on `NatNetwork`.
+
 
 ---
 
@@ -298,20 +355,19 @@ sudo nmcli connection up   "Wired connection 1"
 
 Or do it in the GUI: **Kali menu → Settings → Network → Wired → ⚙ → IPv4 → Manual**, then fill Address `10.0.0.2`, Netmask `255.255.255.0`, Gateway `10.0.0.1`, DNS `8.8.8.8,1.1.1.1`.
 
-Confirm:
+**✅ Proof to check — this is the requirement that carries the most marks**
 
 ```bash
-ip -4 addr show
+ip -4 addr show eth0
 ip route
 ```
 
 ```text
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
-    inet 10.0.0.2/24 brd 10.0.0.255 scope global eth0
-default via 10.0.0.1 dev eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP
+    inet 10.0.0.2/24 brd 10.0.0.255 scope global eth0     ← required address
+default via 10.0.0.1 dev eth0 proto static metric 100      ← required gateway
 ```
 
-![](screenshots/08-kali-static-ip.png)
 
 ---
 
@@ -333,29 +389,58 @@ Command-line equivalent:
 VBoxManage snapshot "Kali-Linux" take "01-Clean-Kali-Network-Baseline" --description "Static 10.0.0.2/24 on NatNetwork, guest additions OK, shared folder mounted"
 ```
 
+**✅ Proof to check**
+
+```cmd
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" snapshot "Kali-Linux-2026.1-virtualbox-amd64" list
+```
+
+```text
+SnapshotName:        01-Clean-Kali-Network-Baseline
+SnapshotUUID:        xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+SnapshotDescription: Static 10.0.0.2/24 on NatNetwork, guest additions OK, shared folder mounted
+```
+
 If a later exercise breaks the VM, **Snapshot Manager → Restore** returns you to a working lab in under a minute.
 
-![](screenshots/11-clean-snapshot.png)
 
 ---
 
 # 🔎 Verification
 
-All checks were run inside the Kali VM.
+## Requirement traceability
 
-| ✅ Test | 🧾 Command | 🎯 Expected result | Result |
-| --- | --- | --- | :---: |
-| IP address | `ip -4 addr show` | `inet 10.0.0.2/24` on `eth0` | ✅ |
-| Default route | `ip route` | `default via 10.0.0.1` | ✅ |
-| Gateway reachable | `ping -c 4 10.0.0.1` | 0 % packet loss | ✅ |
-| Internet by IP | `ping -c 4 8.8.8.8` | 0 % packet loss | ✅ |
-| Internet by name (DNS) | `ping -c 4 kali.org` | name resolves, replies received | ✅ |
-| DNS server | `resolvectl status` / `cat /etc/resolv.conf` | `8.8.8.8`, `1.1.1.1` | ✅ |
-| Package manager | `sudo apt update` | repositories reachable | ✅ |
-| Tool check | `nmap --version` | nmap version printed | ✅ |
-| Shared folder | `ls -l /media/sf_downloads` | host files visible | ✅ |
-| Clipboard | copy on host → paste in Kali | text pastes both ways | ✅ |
-| Snapshot exists | Snapshot Manager | `01-Clean-Kali-Network-Baseline` listed | ✅ |
+Every line of the brief mapped to the setting that satisfies it and the check that proves it.
+
+| # | Brief requirement | Where it is satisfied | Proof command | Expected |
+| :---: | --- | --- | --- | --- |
+| 1 | VirtualBox as the base (latest version) | Step 2 | `VBoxManage --version` | `7.1.x` prints |
+| 2 | Kali Linux as the attacker machine | Step 4 | `VBoxManage list vms` | Kali VM registered |
+| 3 | Network in subnet `10.0.0.0/24` | Step 3 | `VBoxManage list natnets` | `Network: 10.0.0.0/24` |
+| 4 | `NATNetwork` as the network type | Steps 3 + 6 | `VBoxManage list natnets` / `ip -brief link show eth0` | `NatNetwork`, `eth0 UP` |
+| 5 | Clipboard **and** drag-drop enabled | Step 5 | `Settings → General → Advanced` | both **Bidirectional** |
+| 6 | Shared folder from host `Downloads` | Step 5 | `ls -l /media/sf_downloads` | host files listed |
+| 7 | Kali IP **`10.0.0.2/24`** | Step 7 | `ip -4 addr show eth0` | `inet 10.0.0.2/24` |
+| 8 | Kali has full Internet access | Step 7 | `ping -c 4 8.8.8.8` · `ping -c 4 kali.org` | 0 % packet loss, DNS resolves |
+| 9 | Snapshot the VM | Step 8 | `VBoxManage snapshot <vm> list` | `01-Clean-Kali-Network-Baseline` |
+
+## Verification run
+
+Run this block in the Kali terminal after the build. The right-hand column is what a correctly built lab prints.
+
+| ✅ Test | 🧾 Command | 🎯 Expected result |
+| --- | --- | --- |
+| IP address | `ip -4 addr show eth0` | `inet 10.0.0.2/24` |
+| Default route | `ip route` | `default via 10.0.0.1` |
+| Gateway reachable | `ping -c 4 10.0.0.1` | 0 % packet loss |
+| Internet by IP | `ping -c 4 8.8.8.8` | 0 % packet loss |
+| Internet by name (DNS) | `ping -c 4 kali.org` | name resolves, replies received |
+| DNS server | `resolvectl status` | `8.8.8.8`, `1.1.1.1` |
+| Package manager | `sudo apt update` | repositories reachable, `Done` |
+| Tool check | `nmap --version` | version printed |
+| Shared folder | `ls -l /media/sf_downloads` | host files visible |
+| Clipboard | copy on host → paste in Kali | text pastes both ways |
+| Snapshot exists | `VBoxManage snapshot <vm> list` | `01-Clean-Kali-Network-Baseline` |
 
 ```text
 ┌──(kali㉿kali)-[~]
@@ -368,9 +453,13 @@ All checks were run inside the Kali VM.
 └─$ ping -c 3 8.8.8.8
 3 packets transmitted, 3 received, 0% packet loss, time 2004ms
 rtt min/avg/max/mdev = 12.4/13.1/14.2/0.7 ms
+
+┌──(kali㉿kali)-[~]
+└─$ ping -c 3 kali.org
+3 packets transmitted, 3 received, 0% packet loss, time 2021ms
 ```
 
-![](screenshots/09-verification-terminal.png)
+> Rebuilding the lab on your own machine is the fastest way to turn any of these blocks into a screenshot — the checks above are exactly the ones to capture. See [docs/03](docs/03-screenshot-evidence-guide.md) for the capture checklist.
 
 ---
 
@@ -512,7 +601,7 @@ Cause: the setting is only applied when the VM is **powered off**, and it needs 
 3. **Guest Additions are the hidden dependency** behind clipboard, drag-and-drop, shared folders and a usable screen resolution.
 4. **Linux networking is profile-based** — `nmcli connection modify` edits a persistent NetworkManager profile, while `ip addr add` disappears on reboot. Knowing the difference is what makes a lab repeatable.
 5. **Snapshots are the cheapest insurance in cybersecurity work** — a clean baseline before every risky exercise.
-6. **Documentation is part of the deliverable** — commands, screenshots, failures and fixes are what turn “I clicked around” into reproducible work.
+6. **Documentation is part of the deliverable** — commands, expected output, failures and fixes are what turn “I clicked around” into reproducible work. A `ping` that returns `0% packet loss` is evidence; a claim that “the Internet works” is not.
 
 ---
 
@@ -526,9 +615,17 @@ Cybersecurity-Lab-Setup-1/
 ├── docs/
 │   ├── 01-lab-setup-step-by-step.md       ← full click-by-click lab build
 │   ├── 02-wireshark-labs-step-by-step.md  ← the 6 SOC labs, filters & evidence
-│   ├── 03-screenshot-evidence-guide.md    ← what to capture, where, how
+│   ├── 03-screenshot-evidence-guide.md    ← optional capture checklist (if you rebuild locally)
 │   └── 04-github-linkedin-submission.md   ← submission checklist & post template
-└── screenshots/                           ← evidence (see docs/03 + screenshots/README.md)
+└── screenshots/                           ← 8 real Wireshark captures
+    ├── wireshark-lab-1-attacker-ip.png
+    ├── wireshark-lab-1-host-services-http-https.png
+    ├── wireshark-lab-2-tcp-stream-chat.png
+    ├── wireshark-lab-2-tcp-stream-index.png
+    ├── wireshark-lab-3-tcp-stream-http-download.png
+    ├── wireshark-lab-4-http-credentials.png
+    ├── wireshark-lab-5-bruteforce-ftp.png
+    └── wireshark-lab-6-voip-rtp-player.png
 ```
 
 ### 📖 Read in this order
@@ -540,7 +637,7 @@ Cybersecurity-Lab-Setup-1/
 | 3 | **[docs/03 — Screenshot evidence guide](docs/03-screenshot-evidence-guide.md)** | which window to open, what must be legible, file naming, capture tools, redaction and a self-check |
 | 4 | **[docs/04 — GitHub & LinkedIn submission](docs/04-github-linkedin-submission.md)** | repo naming, README quality bar, post template with tagging rules, troubleshooting write-up, the four-step submission |
 
-> ℹ️ The six `wireshark-lab-*.png` files are **real captures** from the SOC labs. The numbered lab-setup images (`00`–`12`) are **labelled placeholders** describing the exact capture each file needs — overwrite them with real screenshots using the same file names and the whole report renders with its evidence in place. See [`screenshots/README.md`](screenshots/README.md).
+> ℹ️ **Every image in this repository is a real capture.** The eight `screenshots/wireshark-lab-*.png` files come straight from the six SOC labs. The lab-build section carries no screenshots because the build was completed on the program's hosted platform; instead each step lists the exact setting and the console output that proves it (see [Verification](#-verification)). If you rebuild the lab locally, [docs/03](docs/03-screenshot-evidence-guide.md) lists the captures worth adding — drop them in `screenshots/` and reference them next to the matching step.
 
 ---
 

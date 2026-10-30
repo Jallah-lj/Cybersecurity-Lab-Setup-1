@@ -3,6 +3,7 @@
 > **Who this is for:** anyone who has to reproduce the Week 1 lab from a clean Windows laptop, and anyone who already did it on a hosted platform and needs to rebuild it on their own machine to capture evidence.
 >
 > **Time needed:** ~60–90 minutes (most of it is the Kali download).
+> **Evidence:** the shipped repository has no lab-build screenshots — the build was completed on the program's hosted platform. Every step below therefore ends with the **setting to verify** and, where possible, the **command whose output proves it**. The capture prompts are optional extras for anyone rebuilding locally.
 > **Result:** Kali Linux at `10.0.0.2/24` on a `10.0.0.0/24` NAT Network, with Internet access, bidirectional clipboard, drag-and-drop, a shared `downloads` folder and a clean snapshot.
 
 **Task requirements checklist (from the official WK1-PM1 brief):**
@@ -76,8 +77,8 @@ Write down: host OS + version, RAM, CPU. These go into the *Lab Configuration* t
 
 **Expected result:** `C:\Program Files\7-Zip\7zFM.exe` exists and the shell context menu has a 7-Zip entry.
 
-> ⬛ **SCREENSHOT #01:** the 7-Zip context menu (or the *About* window showing the version).
-> Save as `screenshots/01-7zip-installed.png`.
+> ⬛ **OPTIONAL CAPTURE #01:** the 7-Zip context menu (or the *About* window showing the version).
+> If you are rebuilding locally, save as `screenshots/01-7zip-installed.png`.
 
 ---
 
@@ -104,8 +105,8 @@ Write down: host OS + version, RAM, CPU. These go into the *Lab Configuration* t
 
 **Expected result:** the version prints without error. `VBoxManage` will be used for several checks later.
 
-> ⬛ **SCREENSHOT #02:** VirtualBox main window with **Help → About VirtualBox** open, showing the version (and, ideally, the `VBoxManage --version` output in a terminal next to it).
-> Save as `screenshots/02-virtualbox-version.png`.
+> ⬛ **OPTIONAL CAPTURE #02:** VirtualBox main window with **Help → About VirtualBox** open, showing the version (and, ideally, the `VBoxManage --version` output in a terminal next to it).
+> If you are rebuilding locally, save as `screenshots/02-virtualbox-version.png`.
 
 > 💡 If the installer fails with *"Installation failed! Error: ... rollback"*, reboot and run the installer **as Administrator**; a partially failed previous install must be removed from *Apps & Features* first.
 
@@ -160,8 +161,8 @@ Dhcp Enabled:   Yes
 
 Alternative check: `ipconfig` on the host shows an adapter whose description contains *VirtualBox Host-Only* / *NAT* — the NAT Network itself does not appear on the host, which is correct.
 
-> ⬛ **SCREENSHOT #03:** the Network Manager → **NAT Networks** tab with `NatNetwork`, `10.0.0.0/24` and DHCP visible.
-> Save as `screenshots/03-natnetwork-settings.png`.
+> ⬛ **OPTIONAL CAPTURE #03:** the Network Manager → **NAT Networks** tab with `NatNetwork`, `10.0.0.0/24` and DHCP visible.
+> If you are rebuilding locally, save as `screenshots/03-natnetwork-settings.png`.
 
 ---
 
@@ -181,8 +182,8 @@ certutil -hashfile "C:\Users\<you>\Downloads\kali-linux-2026.1-virtualbox-amd64.
 
 Compare the printed hash with the one on kali.org. **They must match character for character.** A corrupt image produces the weirdest VM failures later.
 
-> ⬛ **SCREENSHOT #04a (optional):** the hash comparison in a terminal.
-> Save as `screenshots/04a-kali-sha256-check.png`.
+> ⬛ **OPTIONAL CAPTURE #04a:** the hash comparison in a terminal.
+> If you are rebuilding locally, save as `screenshots/04a-kali-sha256-check.png`.
 
 ### 4.3 Extract
 
@@ -306,11 +307,11 @@ echo "hello from Kali" | sudo tee /media/sf_downloads/from-kali.txt
 
 > 💡 If `sudo` is required to write into the folder, your user is still not in `vboxsf`, or *Read-only* is ticked.
 
-> ⬛ **SCREENSHOT #05:** Settings → **Shared Folders** panel showing `downloads`, **auto-mount** ✔, **make permanent** ✔ — plus (better) a second terminal showing `ls -l /media/sf_downloads` listing real host files.
-> Save as `screenshots/05-shared-folder-settings.png` and `screenshots/05b-shared-folder-mounted.png`.
+> ⬛ **OPTIONAL CAPTURE #05:** Settings → **Shared Folders** panel showing `downloads`, **auto-mount** ✔, **make permanent** ✔ — plus (better) a second terminal showing `ls -l /media/sf_downloads` listing real host files.
+> If you are rebuilding locally, save as `screenshots/05-shared-folder-settings.png` and `screenshots/05b-shared-folder-mounted.png`.
 
-> ⬛ **SCREENSHOT #06:** *Settings → General → Advanced* with **Shared Clipboard: Bidirectional** and **Drag'n'Drop: Bidirectional**.
-> Save as `screenshots/06-clipboard-dragdrop.png`.
+> ⬛ **OPTIONAL CAPTURE #06:** *Settings → General → Advanced* with **Shared Clipboard: Bidirectional** and **Drag'n'Drop: Bidirectional**.
+> If you are rebuilding locally, save as `screenshots/06-clipboard-dragdrop.png`.
 
 ---
 
@@ -330,8 +331,8 @@ Advanced
 
 **Expected result:** inside Kali, `ip link` shows `eth0` as `state UP`.
 
-> ⬛ **SCREENSHOT #07:** the *Network → Adapter 1* panel showing **NAT Network / NatNetwork**.
-> Save as `screenshots/07-network-adapter.png`.
+> ⬛ **OPTIONAL CAPTURE #07:** the *Network → Adapter 1* panel showing **NAT Network / NatNetwork**.
+> If you are rebuilding locally, save as `screenshots/07-network-adapter.png`.
 
 ---
 
@@ -402,10 +403,10 @@ default via 10.0.0.1 dev eth0 proto static metric 100
 >
 > 💡 **DHCP conflict check:** if `ip a` shows a second address such as `10.0.0.5/24`, another VM or the DHCP server took `.2` first. Fix in Network Manager, or shut down the other VM, then re-apply.
 
-> ⬛ **SCREENSHOT #08:** terminal with `ip -4 addr show` and `ip route` output clearly showing `10.0.0.2/24` and `10.0.0.1`.
-> Save as `screenshots/08-kali-static-ip.png`.
-> ⬛ **SCREENSHOT #08b:** the Kali GUI *Network → IPv4 Manual* panel with the same values (shows both methods).
-> Save as `screenshots/08b-kali-ip-gui.png`.
+> ⬛ **OPTIONAL CAPTURE #08:** terminal with `ip -4 addr show` and `ip route` output clearly showing `10.0.0.2/24` and `10.0.0.1`.
+> If you are rebuilding locally, save as `screenshots/08-kali-static-ip.png`.
+> ⬛ **OPTIONAL CAPTURE #08b:** the Kali GUI *Network → IPv4 Manual* panel with the same values (shows both methods).
+> If you are rebuilding locally, save as `screenshots/08b-kali-ip-gui.png`.
 
 ---
 
@@ -460,11 +461,11 @@ Expected summary:
 | `nmap --version` | `Nmap version 7.9x` |
 | `ls /media/sf_downloads` | your host Download files |
 
-> ⬛ **SCREENSHOT #09:** this verification block, with the important lines legible (do it in two terminal tabs if it is too long — `09a-network-verification.png`, `09b-internet-and-dns.png`).
-> Save as `screenshots/09-verification-terminal.png`.
+> ⬛ **OPTIONAL CAPTURE #09:** this verification block, with the important lines legible (do it in two terminal tabs if it is too long — `09a-network-verification.png`, `09b-internet-and-dns.png`).
+> If you are rebuilding locally, save as `screenshots/09-verification-terminal.png`.
 
-> ⬛ **SCREENSHOT #10 (clipboard proof):** host Notepad containing a line of text, and the same text pasted into a Kali terminal via `Ctrl+Shift+V`. Two screenshots side by side prove *bidirectional*.
-> Save as `screenshots/10-clipboard-bidirectional.png`.
+> ⬛ **OPTIONAL CAPTURE #10 (clipboard proof):** host Notepad containing a line of text, and the same text pasted into a Kali terminal via `Ctrl+Shift+V`. Two screenshots side by side prove *bidirectional*.
+> If you are rebuilding locally, save as `screenshots/10-clipboard-bidirectional.png`.
 
 ---
 
@@ -490,8 +491,8 @@ Description:  Kali 2026.1 — static 10.0.0.2/24 on NatNetwork 10.0.0.0/24,
 
 Verify: **Snapshot Manager** (`Host + S`) lists the snapshot.
 
-> ⬛ **SCREENSHOT #11:** Snapshot Manager showing `01-Clean-Kali-Network-Baseline` with the description visible.
-> Save as `screenshots/11-clean-snapshot.png`.
+> ⬛ **OPTIONAL CAPTURE #11:** Snapshot Manager showing `01-Clean-Kali-Network-Baseline` with the description visible.
+> If you are rebuilding locally, save as `screenshots/11-clean-snapshot.png`.
 
 > 💡 **Name two snapshots per project:** one *clean baseline* before risky work, and one *post-exercise* checkpoint. Restore, never "repair".
 
@@ -529,8 +530,8 @@ Suggested addressing plan (from the program diagram):
 | Android 9x | `10.0.0.11/24` | target |
 | Windows 7 | `10.0.0.16/24` | target |
 
-> ⬛ **SCREENSHOT #12 (optional):** `ping` between Kali and the target VM, both directions.
-> Save as `screenshots/12-ping-test-target-vm.png`.
+> ⬛ **OPTIONAL CAPTURE #12:** `ping` between Kali and the target VM, both directions.
+> If you are rebuilding locally, save as `screenshots/12-ping-test-target-vm.png`.
 
 ---
 
@@ -618,11 +619,11 @@ resolvectl status | head
 
 ---
 
-## 📸 Evidence to capture
+## 📸 Optional evidence to capture
 
-The complete, submission-ready evidence plan (file names, what must be visible in each shot, how to take them on Windows/Kali, and how to redact sensitive data) is in **[03-screenshot-evidence-guide.md](03-screenshot-evidence-guide.md)**.
+The shipped repository proves each requirement with a **command + expected output** instead of images (see [Verification](../README.md#-verification)), because the lab was built on the hosted platform. If you rebuild locally, the full capture plan — file names, what must be visible, capture tools and redaction — is in **[03-screenshot-evidence-guide.md](03-screenshot-evidence-guide.md)**.
 
-Minimum set for WK1-PM1:
+Capture list for WK1-PM1 (all optional):
 
 | # | File | Shows |
 | --- | --- | --- |

@@ -1,8 +1,10 @@
 # 📸 Screenshot & Evidence Guide — how to capture proof for every step
 
-> **Why this file exists:** the lab was originally completed on a hosted platform where local screenshots were not possible. This guide makes rebuilding it on a personal machine (or re-capturing evidence) a **30-minute checklist**: exactly which window to open, what must be legible in the frame, the file name to save it as, and how to redact anything sensitive.
+> **Why this file exists:** the lab was completed on the program's **hosted platform**, where screenshots from inside the environment were not possible. The repository therefore proves each lab requirement with the *setting plus the console output it produces* (see the README's [Verification](../README.md#-verification) section), which is verifiable evidence in its own right.
 >
-> Every file name below is the one already referenced by `README.md`, `docs/01-…` and `docs/02-…`. Drop the PNGs into `screenshots/` with these names and the whole repository renders with its evidence in place.
+> This guide is the **optional upgrade path**: if you ever rebuild the lab on your own laptop — or want to strengthen the portfolio — it is a 30-minute checklist of exactly which window to open, what must be legible in the frame, the file name to save it as, and how to redact anything sensitive before publishing.
+>
+> ⚠️ **No placeholder images are shipped in this repository.** `screenshots/` contains only real captures. The file names below are suggestions; add them only if you actually capture them.
 
 ---
 
@@ -41,9 +43,9 @@
 
 ---
 
-## 3 · Screenshot checklist — WK1-PM1 (lab setup)
+## 3 · Optional capture checklist — WK1-PM1 (lab setup)
 
-Save into `screenshots/`. The middle column is what a grader must be able to read.
+If you rebuild the lab locally, save into `screenshots/`. The middle column is what a grader must be able to read.
 
 | File name | Window to open | Must be legible |
 | --- | --- | --- |
@@ -62,9 +64,9 @@ Save into `screenshots/`. The middle column is what a grader must be able to rea
 | `11-clean-snapshot.png` | VirtualBox **Snapshot Manager** | snapshot name `01-Clean-Kali-Network-Baseline` + description |
 | `12-ping-test-target-vm.png` *(optional, Phase 2)* | two terminals | `ping 10.0.0.10` and `ping 10.0.0.2`, both replying |
 
-### The four screenshots that decide the mark
+### The four screenshots that would decide the mark
 
-If you can only capture four, capture these — one per written requirement:
+If you do capture, start here — one per written requirement:
 
 1. `03-natnetwork-settings.png` → “NAT Network in `10.0.0.0/24`”
 2. `06-clipboard-dragdrop.png` → “clipboard **and** drag/drop enabled”
@@ -229,13 +231,14 @@ For side-by-side proof use an HTML table:
 </table>
 ```
 
-> ⚠️ **Current state of this repo:** the numbered lab-setup files in `screenshots/` are labelled **placeholders** (the six `wireshark-lab-*.png` are real captures) so every layout/table in the README can be checked before the real evidence is captured. Replace each placeholder with the real capture of the same name — no markdown edits required. Delete `screenshots/README.md` when you are done.
+> ℹ️ **Current state of this repo:** `screenshots/` holds the **eight real Wireshark captures** only. The lab-build section of the README uses command + expected-output blocks instead of images, so nothing renders broken while the local captures are missing. Add a capture and reference it next to its step, or leave the console proof in place — both are valid evidence.
 
 ---
 
 ## 9 · Quality self-check before submitting
 
-- [ ] Every mandatory file in §3 exists (14 for the lab) and all 8 Wireshark captures + 6 completion screens
+- [ ] *(only if you chose to capture)* every file you reference exists, and no link is broken
+- [ ] the 8 Wireshark captures are present (they are, in this repo)
 - [ ] Each file matches its required content column — open it and re-read
 - [ ] No personal data visible; lab `10.0.0.x` addresses still visible
 - [ ] Images are PNG, under ~2 MB, readable at 100 % zoom
