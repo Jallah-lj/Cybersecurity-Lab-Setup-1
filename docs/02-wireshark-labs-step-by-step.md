@@ -360,36 +360,320 @@ tshark -r demo.pcapng -Y 'http contains "password"' -T fields -e ip.src -e text
 
 ---
 
-## 9 · Answer sheet (fill this in as you go)
+## 9 · Captured evidence and findings (all six labs)
 
-| Lab | Task | Question (short) | My answer | Evidence (filter / window) |
+The screenshots below were taken during the labs. Each one is also the **worked example** for the method described above — compare your own capture against it.
+
+### Lab 1 — Identify the Attacker's IP
+
+![Lab 1: RST/ACK replies to a port scan, filter ip.src == 192.168.10.20 and ip.dst == 192.168.10.66 and tcp.flags.reset == 1](../screenshots/wireshark-lab-1-attacker-ip.png)
+
+```text
+Filter:  ip.src == 192.168.10.20 and ip.dst == 192.168.10.66 and tcp.flags.reset == 1
+Displayed: 37 of 309 packets (12.0 %)
+```
+
+**What the capture shows.** Frames 88–108 are a burst of `[RST, ACK]` replies, all inside ~110 ms, from `192.168.10.20` to `192.168.10.66`. The *source port* changes on every packet and reads like a service catalogue — `3306` (MySQL), `445` (SMB), `8080` (HTTP-alt), `21` (FTP), `3389` (RDP), `139` (NetBIOS), `25` (SMTP), `5900` (VNC) — while the destination port stays fixed at `5231`.
+
+**How to read it.** A `RST, ACK` with `Seq=0 Ack=1` is a *refusal*: the receiving stack is saying “nothing is listening on that port”. Because the odd port numbers appear as the **source** port of the refusal, the probes were sent **from `192.168.10.66:5231` to those eight ports on `192.168.10.20`** — one source host sweeping many service ports in a fraction of a second is the signature of an automated **port scan**, not of a user browsing.
+
+| Item | Value |
+| --- | --- |
+| Host that initiated the scan | **`192.168.10.66`** (source port `5231`) |
+| Scanned host | **`192.168.10.20`** |
+| Ports probed | `21, 25, 139, 445, 3306, 3389, 5900, 8080` |
+| Duration of the burst | ~110 ms (frames 88 → 108) |
+| Verdict | Automated reconnaissance / port scan |
+
+> 🔎 **Confirm the direction in one filter** (recommended for the report — it shows the SYNs that started it):
+> ```text
+> ip.src == 192.168.10.66 && ip.dst == 192.168.10.20 && tcp.flags.syn == 1 && tcp.flags.ack == 0
+> ```
+> If that returns the matching SYN packets, `192.168.10.66` is unambiguously the scanner and the RST filter above is simply the *reply* view of the same scan.
+
+---
+
+### Lab 2 — Follow TCP Stream 1
+
+![Lab 2: Follow TCP Stream tcp.stream eq 5 showing an internal office chat with passwords](../screenshots/wireshark-lab-2-tcp-stream-chat.png)
+
+```text
+Filter:  tcp.stream eq 5
+View:    Follow → TCP Stream → Entire conversation → Show data as: ASCII
+Footer:  4 client pkts, 5 server pkts, 9 turns.
+```
+
+**Recovered conversation (an internal "Office Chat v1.2" session, plaintext, no TLS):**
+
+```text
+Welcome to Office Chat v1.2
+Ali (Accounts):  Hi, this is Ali from Accounts. I cannot open the shared drive.
+Sara (IT):       Hello Ali, this is Sara from IT. Which drive is it?
+Ali:             The Finance drive.
+Sara:            OK, I reset your access. Your temporary password is Tiger#4821
+Ali:             Thanks. Do you also have the guest Wi-Fi password for our visitors?
+Sara:            Yes. Guest Wi-Fi password: BlueHarbor77
+Ali:             Perfect. Thank you Sara, bye.
+Sara:            Bye Ali. Your ticket number is HD-20931.
+```
+
+| Item | Value found in the stream |
+| --- | --- |
+| Chat application | Office Chat v1.2 (custom/plaintext protocol) |
+| Users | `Ali` — Accounts · `Sara` — IT |
+| Temporary password (Finance drive) | **`Tiger#4821`** |
+| Guest Wi-Fi password | **`BlueHarbor77`** |
+| Ticket number | **`HD-20931`** |
+| Stream | `tcp.stream eq 5` (9 turns) |
+
+**Why this is a finding, not trivia:** credentials and an internal Wi-Fi PSK travelled in clear text over a chat protocol with no encryption. Anyone able to capture that segment (a mirrored port, a rogue AP, an ARP-spoofed host — all normal in this lab) gets working access. **Fix:** TLS on the chat service, a secrets/ticketing workflow instead of pasting passwords in chat, and rotation of both leaked secrets.
+
+---
+
+### Lab 3 — Follow TCP Stream, Part 2 (data pulled from the server)
+
+![Lab 3: Follow TCP Stream tcp.stream eq 11 showing GET /download/report.txt from intranet.company.local](../screenshots/wireshark-lab-3-tcp-stream-http-download.png)
+
+```text
+Filter:   tcp.stream eq 11
+Frame 168: 192.168.10.45:49828 → 192.168.10.20:80   HTTP   GET /download/report.txt HTTP/1.1
+                                    192.168.10.20:80 → 192.168.10.45:49828   HTTP/1.1 200 OK (text/plain)
+```
+
+**What the capture shows.** A complete, readable HTTP transaction in the packet-details pane:
+
+```http
+GET /download/report.txt HTTP/1.1
+Host: intranet.company.local
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/plain
+```
+
+| Item | Value |
+| --- | --- |
+| Client | `192.168.10.45` (source port `49828`) |
+| Server | `192.168.10.20` (port `80`) |
+| Host / vhost | `intranet.company.local` |
+| Resource requested | **`/download/report.txt`** |
+| Response | `200 OK`, `text/plain` — the file was delivered |
+| Stream | `tcp.stream eq 11` |
+
+**Analyst notes.** The download runs over **plain HTTP on port 80**, so the URI, the hostname and the full body are visible on the wire. The follow-up step for this lab is to reconstruct the payload: right-click the `200 OK` packet → **Follow → TCP Stream**, or **File → Export Objects → HTTP** → save `report.txt` and read it. The MAC addresses (`Intel_…`, `VMware_…`) also mark this as a virtualised lab segment.
+
+---
+
+### Lab 4 — HTTP Plain Text Credentials
+
+![Lab 4: Follow TCP Stream tcp.stream eq 4 showing the login form and the POST /login request](../screenshots/wireshark-lab-4-http-credentials.png)
+
+```text
+Filter:   tcp.stream eq 4
+Frame:    3 client pkts, 3 server pkts, 6 turns (1372 bytes)
+```
+
+**What the capture shows — the classic three-step login exchange:**
+
+```http
+GET /login HTTP/1.1
+Host: portal.company.local
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/118.0.0.0
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/html
+Server: Apache/2.4.57 (Ubuntu)
+
+<body data-rsssl=1><h1>Staff portal</h1><form method="post" action="/login">
+Username <input name="username"> Password <input name="password">
+<button>Login</button></form></body>
+```
+
+```http
+POST /login HTTP/1.1
+Host: portal.company.local
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 36
+```
+
+| Item | Value |
+| --- | --- |
+| Portal | `portal.company.local` — "Staff portal" |
+| Client | Windows 10/11, Chrome 118 |
+| Server | Apache `2.4.57` on Ubuntu |
+| Method | **`POST`** to `/login`, `application/x-www-form-urlencoded` |
+| Body length | 36 bytes — a `username=…&password=…` pair |
+| Stream | `tcp.stream eq 4` |
+
+**Read the credential values from the packet, not the stream window.** The Follow window above is scrolled to the headers; the form body is in the packet-details pane of the `POST` packet:
+
+```text
+Select the POST packet → Hypertext Transfer Protocol
+   → HTML Form URL Encoded: application/x-www-form-urlencoded
+   → username=...  &  password=...
+```
+
+or entirely in one command:
+
+```bash
+tshark -r capture.pcapng -Y 'http.request.method == "POST" && http.host contains "portal"' \
+       -T fields -e ip.src -e http.file_data
+```
+
+**Why it matters:** the password crosses the wire unencrypted. On any shared segment it is readable without touching the server — the single strongest argument for HTTPS + HSTS on internal portals, and for never reusing an internal password elsewhere.
+
+---
+
+### Lab 5 — Catch the Brute Force Attacker
+
+![Lab 5: Follow TCP Stream tcp.stream eq 13 showing repeated FTP USER/PASS attempts until 230 Login successful](../screenshots/wireshark-lab-5-bruteforce-ftp.png)
+
+```text
+Filter:   tcp.stream eq 13
+Footer:   12 client pkts, 13 server pkts, 25 turns (493 bytes)
+```
+
+**Reconstructed session (FTP, cleartext port 21):**
+
+| # | Username | Password tried | Server reply |
+| --- | --- | --- | --- |
+| 0 | — | — | `530 Login incorrect` *(tail of a previous attempt)* |
+| 1 | `admin` | `Winter2025` | `530 Login incorrect` |
+| 2 | `admin` | `Company1` | `530 Login incorrect` |
+| 3 | `admin` | `Admin@123` | `530 Login incorrect` |
+| 4 | `admin` | **`Sunshine99`** | **`230 Login successful`** |
+| 5 | `admin` | — | `PWD` → `257 "/" is the current directory` |
+| 6 | `admin` | — | `QUIT` → `221 Goodbye` |
+
+```text
+USER admin → 331 Please specify the password → PASS <guess> → 530 Login incorrect   (×4)
+USER admin → 331 Please specify the password → PASS Sunshine99 → 230 Login successful
+PWD → 257 "/" is current directory → QUIT → 221 Goodbye
+```
+
+| Item | Value |
+| --- | --- |
+| Protocol | **FTP** (port 21, no TLS) |
+| Targeted account | **`admin`** |
+| Attempts | 5 in this stream (`530` × 4, then `230`) |
+| Attack succeeded? | **Yes — password `Sunshine99` was accepted** |
+| Impact | Interactive shell-level file access as `admin`; `PWD` shows the root directory `/` was reached |
+| Stream | `tcp.stream eq 13` |
+
+**Detection logic to report:** a burst of `USER`/`PASS` pairs against one account with `530` responses, followed by a single `230`, is a textbook password-guessing attack that **succeeded**. A SOC would raise this as high severity, force a password reset, hunt for what was transferred after the `230`, and add an FTP/SSH lockout rule (e.g. fail2ban, or an IDS signature on `530` repetition).
+
+**Related filters to show the scale beyond one stream:**
+
+```text
+ftp.response.code == 530            # count the failures across the whole capture
+ftp.request.command == "USER"       # every account that was targeted
+tcp.port == 21 && tcp.flags.syn == 1 && tcp.flags.ack == 0   # connection attempts per second
+```
+
+---
+
+### Lab 6 — Catch the Call Scammer
+
+![Lab 6: RTP Player with two G.711 PCMU streams between 192.168.10.45 and 192.168.10.52](../screenshots/wireshark-lab-6-voip-rtp-player.png)
+
+```text
+Path:    Telephony → RTP → RTP Player
+Codec:   G.711 PCMU · 2 streams · duration 0:24.1 s
+Packets: 1051 total, 7 displayed (0.7 %)
+```
+
+**What the capture shows — both directions of a phone call:**
+
+| Stream | Path | SSRC |
+| --- | --- | --- |
+| Caller → callee | `192.168.10.45:16384` → `192.168.10.52:18000` | `0x3A7F21C4` |
+| Callee → caller | `192.168.10.52:18000` → `192.168.10.45:16384` | `0x5B9D08E2` |
+
+| Item | Value |
+| --- | --- |
+| Media protocol | **RTP** over UDP, `G.711 PCMU` (8 kHz, uncompressed telephony audio) |
+| Call ends / endpoints | `192.168.10.45` ⇄ `192.168.10.52` |
+| Ports | `16384` and `18000` (dynamic RTP pairs) |
+| Call duration | ≈ 24 s (`0/24.1 s`) |
+| Waveform | four speech bursts separated by silence — a two-party conversation |
+| Streams | 2 SSRCs = one leg each way |
+
+**How to identify the scammer.** The waveform only proves *that* a call happened; the identity comes from **(a) the audio** — press **Play** and listen to the claims, the number they give, the "your account is frozen" script — and **(b) the signalling**. For the report, add the SIP leg:
+
+```text
+sip                        → From: / To: / Contact: identities, INVITE and BYE
+sip.Method == "INVITE"
+rtp                        → confirm both media streams belong to that call
+```
+
+**Scam indicators to write down while listening:** urgency ("within 30 minutes"), authority impersonation (bank / police / Microsoft), a request for an OTP, PIN, gift card or crypto transfer, and a callback number that differs from the caller ID.
+
+> 📝 **Add your audio findings here** — the exact claims, the number quoted and the giveaway phrase are what the lab marks. The capture above is the evidence that you reached the media; the transcript is the answer.
+
+---
+
+### Evidence still to capture (2 minutes per lab)
+
+Everything in this section is a real capture, but each lab also has a **completion screen** that proves all 10 tasks were answered. Add one screenshot per lab:
+
+```text
+screenshots/wireshark-lab-1-complete.png … wireshark-lab-6-complete.png
+```
+
+If you want to close the loop on this repository for good, re-run the six labs once more and capture the sequence *filter → answer* for each; the filters used above are the exact ones to reproduce.
+
+---
+
+## 10 · Answer sheet
+
+Filled from the captures in §9. Replace or extend the rows with the exact wording your lab checker expects.
+
+| # | Lab | Question (short) | Answer | Evidence (filter / window) |
 | --- | --- | --- | --- | --- |
-| 1 | 1 | Attacker IP | | `Statistics → Conversations` |
-| 1 | 2 | | | |
-| 2 | 1 | Stream index | | `tcp.stream eq N` |
-| 2 | 2 | Text recovered | | Follow → TCP Stream |
-| 3 | 1 | Transport used | | `Export Objects` |
-| 3 | 2 | Hidden data | | Hex dump / `base64 -d` |
-| 4 | 1 | Username | | `http.request.method == "POST"` |
-| 4 | 2 | Password | | HTML Form URL Encoded |
-| 5 | 1 | Attacker IP | | `Statistics → Endpoints` |
-| 5 | 2 | Attempt count | | `http.response.code == 401` |
-| 6 | 1 | Caller number | | `sip` → `From:` |
-| 6 | 2 | Scam claim | | `Telephony → RTP → Play` |
+| 1 | Identify the Attacker's IP | Attacker / scanner IP | `192.168.10.66` (source port `5231`) | `ip.src==192.168.10.20 and ip.dst==192.168.10.66 and tcp.flags.reset==1` |
+| 1 | ” | Scanned host | `192.168.10.20` | same filter, destination column |
+| 1 | ” | Ports probed | `21, 25, 139, 445, 3306, 3389, 5900, 8080` | source ports in the RST,ACK replies |
+| 1 | ” | What happened | automated port scan, ~110 ms | frames 88–108 |
+| 2 | Follow TCP Stream 1 | Stream index | `tcp.stream eq 5` | 4 client / 5 server pkts, 9 turns |
+| 2 | ” | Temporary password | `Tiger#4821` | Follow → TCP Stream (ASCII) |
+| 2 | ” | Guest Wi-Fi password | `BlueHarbor77` | same stream |
+| 2 | ” | Ticket number | `HD-20931` | same stream |
+| 3 | Follow TCP Stream, Part 2 | Client → server | `192.168.10.45:49828` → `192.168.10.20:80` | `tcp.stream eq 11` |
+| 3 | ” | Resource requested | `/download/report.txt` on `intranet.company.local` | frame 168, HTTP GET |
+| 3 | ” | Server response | `200 OK`, `text/plain` — file delivered | frame 170 |
+| 4 | HTTP Plain Text Credentials | Login endpoint | `POST /login` on `portal.company.local` | `tcp.stream eq 4` |
+| 4 | ” | Body type / length | `application/x-www-form-urlencoded`, 36 bytes | POST packet headers |
+| 4 | ” | Username / password | *read from the packet body* — expand **HTML Form URL Encoded** | `tshark … -e http.file_data` |
+| 4 | ” | Server software | Apache `2.4.57` (Ubuntu) | `200 OK` response headers |
+| 5 | Catch the Brute Force Attacker | Protocol / targeted account | FTP (port 21) / `admin` | `tcp.stream eq 13` |
+| 5 | ” | Attempts in the stream | 5 (`530` × 4 → `230`) | Follow → TCP Stream |
+| 5 | ” | Did it succeed? | **Yes — `Sunshine99` → `230 Login successful`** | same stream |
+| 5 | ” | Post-compromise action | `PWD` → `/`, then `QUIT` | same stream |
+| 6 | Catch the Call Scammer | Media / codec | RTP over UDP, **G.711 PCMU** | `Telephony → RTP → RTP Player` |
+| 6 | ” | Call endpoints | `192.168.10.45:16384` ⇄ `192.168.10.52:18000` | RTP Player, 2 streams |
+| 6 | ” | Duration | ≈ 24 s (`0/24.1`) | RTP Player footer |
+| 6 | ” | Scammer identity / claims | *from the audio (`Play`) and the SIP `From:` header* | `Telephony → VoIP Calls`, `sip` |
 
-> Keep this table in the repo (or in your notes) — the **same rows** become the “findings” section of your submission and of your LinkedIn post (without real IPs).
+> The three italic cells are the only answers that cannot be read off a screenshot: the credential values (they sit in the POST body pane) and the spoken content of the call. Everything else is proven by the images above.
+>
+> Keep this table in the repo (or in your notes) — the **same rows** become the “findings” section of your submission and of your LinkedIn post (without IPs).
+
 
 ### Final submission checklist
 
 - [ ] All 6 labs opened and completed (10/10 each)
-- [ ] “Lab complete” screen captured for each
+- [ ] Investigation screenshot captured for each lab (§9 — done)
+- [ ] “Lab complete” screen captured for each (`…-complete.png`)
 - [ ] Answer sheet filled for every task
 - [ ] Ticked all six labs on <https://networkwalks.com/submission/>
 - [ ] Local Wireshark exercises A–E done with screenshots (optional but strongly recommended)
 
 ---
 
-## 10 · Report-ready findings template
+## 11 · Report-ready findings template
 
 ```markdown
 ### Lab N — <name>

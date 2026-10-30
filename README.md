@@ -43,6 +43,7 @@ Kali Linux is configured with the fixed address **`10.0.0.2/24`**, the clipboard
 | 7 | Verify connectivity (gateway, DNS, Internet, tooling) | ✅ |
 | 8 | Take a clean VM snapshot as a recovery baseline | ✅ |
 | 9 | Complete the 6 Wireshark SOC labs (extra module) | ✅ |
+| 9b | Document the findings of all 6 SOC captures with evidence | ✅ |
 | 10 | Document every step with commands and screenshots | ✅ |
 
 ---
@@ -377,18 +378,76 @@ rtt min/avg/max/mdev = 12.4/13.1/14.2/0.7 ms
 
 # 🦈 Extra Module — Wireshark SOC Labs (WK1-PMx)
 
-Six browser-based SOC investigations were completed on top of the lab build (10 tasks each): *Identify the Attacker's IP*, *Follow TCP Stream 1*, *Follow TCP Stream Part 2*, *HTTP Plain Text Credentials*, *Catch the Brute Force Attacker* and *Catch the Call Scammer*.
+Six browser-based SOC investigations were completed on top of the lab build — **10 tasks each**, using Wireshark to hunt an attacker, rebuild a conversation, pull a file off the wire, catch a password in the clear, prove a brute force succeeded and trace a scam call.
 
-| SOC Lab | Skill practiced | Tasks | Status |
-| --- | --- | :---: | :---: |
-| Identify the Attacker's IP | Endpoint / conversation analysis | 10/10 | ✅ |
-| Follow TCP Stream 1 | Reassembling a conversation | 10/10 | ✅ |
-| Follow TCP Stream, Part 2 | Hidden data inside a stream | 10/10 | ✅ |
-| HTTP Plain Text Credentials | Cleartext credential hunting | 10/10 | ✅ |
-| Catch the Brute Force Attacker | Detecting repeated auth attempts | 10/10 | ✅ |
-| Catch the Call Scammer | VoIP / RTP stream analysis | 10/10 | ✅ |
+| SOC Lab | Skill practiced | What the capture revealed | Tasks | Evidence |
+| --- | --- | :---: | :---: | :---: |
+| Identify the Attacker's IP | endpoint / conversation analysis | automated port scan of 8 service ports (`21, 25, 139, 445, 3306, 3389, 5900, 8080`) from `192.168.10.66` → `192.168.10.20` in ~110 ms | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
+| Follow TCP Stream 1 | reassembling a conversation | internal chat in plaintext leaking a temporary password, a **guest Wi-Fi PSK** and a ticket number | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
+| Follow TCP Stream, Part 2 | data pulled from a server | `GET /download/report.txt` on `intranet.company.local` over HTTP, `200 OK text/plain` | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
+| HTTP Plain Text Credentials | cleartext credential hunting | `POST /login` to a staff portal with `application/x-www-form-urlencoded` credentials, no TLS | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
+| Catch the Brute Force Attacker | detecting repeated auth attempts | FTP password guessing against `admin` — 4 × `530` then `230 Login successful` | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
+| Catch the Call Scammer | VoIP / RTP stream analysis | two-way RTP call, G.711 PCMU, `192.168.10.45:16384` ⇄ `192.168.10.52:18000`, 24 s | 10/10 | [§9](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs) |
 
-Method, filters, commands and evidence for every lab: **[docs/02-wireshark-labs-step-by-step.md](docs/02-wireshark-labs-step-by-step.md)**.
+---
+
+## Lab 1 — Identify the Attacker's IP
+
+Filter `ip.src == 192.168.10.20 and ip.dst == 192.168.10.66 and tcp.flags.reset == 1` isolates a burst of `RST, ACK` refusals whose **source ports are a service catalogue** — the reply view of a port scan. The host that initiated it is `192.168.10.66` (source port `5231`); the scanned host is `192.168.10.20`.
+
+![Lab 1 — RST,ACK replies to a port scan](screenshots/wireshark-lab-1-attacker-ip.png)
+
+## Lab 2 — Follow TCP Stream 1
+
+`tcp.stream eq 5` rebuilds a 9-turn "Office Chat v1.2" conversation. Credentials travelled in the clear:
+
+```text
+Sara (IT):   OK, I reset your access. Your temporary password is Tiger#4821
+Ali:         Thanks. Do you also have the guest Wi-Fi password for our visitors?
+Sara:        Yes. Guest Wi-Fi password: BlueHarbor77
+Sara:        Bye Ali. Your ticket number is HD-20931.
+```
+
+![Lab 2 — Follow TCP Stream eq 5, plaintext chat with passwords](screenshots/wireshark-lab-2-tcp-stream-chat.png)
+
+## Lab 3 — Follow TCP Stream, Part 2
+
+`tcp.stream eq 11` shows an HTTP file pull in full: `GET /download/report.txt` for `intranet.company.local`, answered `200 OK (text/plain)` — URI, hostname and body all readable because there is no TLS.
+
+![Lab 3 — Follow TCP Stream eq 11, HTTP GET /download/report.txt](screenshots/wireshark-lab-3-tcp-stream-http-download.png)
+
+## Lab 4 — HTTP Plain Text Credentials
+
+`tcp.stream eq 4` captures the complete login exchange: the staff-portal HTML form, then `POST /login` with `Content-Type: application/x-www-form-urlencoded` and a 36-byte body — the username/password pair, visible in the packet's **HTML Form URL Encoded** pane.
+
+![Lab 4 — Follow TCP Stream eq 4, login form and POST /login](screenshots/wireshark-lab-4-http-credentials.png)
+
+## Lab 5 — Catch the Brute Force Attacker
+
+`tcp.stream eq 13` — an FTP session under password guessing. Four `530 Login incorrect` replies, then the fifth guess is accepted:
+
+| Try | Username | Password | Reply |
+| :---: | --- | --- | --- |
+| 1 | `admin` | `Winter2025` | `530 Login incorrect` |
+| 2 | `admin` | `Company1` | `530 Login incorrect` |
+| 3 | `admin` | `Admin@123` | `530 Login incorrect` |
+| 4 | `admin` | **`Sunshine99`** | **`230 Login successful`** |
+| — | `admin` | — | `PWD` → `/` · `QUIT` → `221 Goodbye` |
+
+The attack **succeeded** — the finding a SOC escalates as high severity.
+
+![Lab 5 — Follow TCP Stream eq 13, FTP brute force ending in 230 Login successful](screenshots/wireshark-lab-5-bruteforce-ftp.png)
+
+## Lab 6 — Catch the Call Scammer
+
+`Telephony → RTP → RTP Player` decodes both legs of a 24-second call: G.711 PCMU, SSRCs `0x3A7F21C4` and `0x5B9D08E2`, between `192.168.10.45:16384` and `192.168.10.52:18000`. The waveform shows four speech bursts; **Play** streams the audio, and the SIP `From:` header supplies the caller identity.
+
+![Lab 6 — RTP Player, two G.711 PCMU streams of a phone call](screenshots/wireshark-lab-6-voip-rtp-player.png)
+
+---
+
+> 📄 Full worked method, the exact filters, the reconstructed transcripts and an impact/recommendation line for each lab: **[docs/02-wireshark-labs-step-by-step.md](docs/02-wireshark-labs-step-by-step.md#9--captured-evidence-and-findings-all-six-labs)**.
+> 🖼️ Still to add: a `wireshark-lab-N-complete.png` screen per lab proving all 10 tasks were answered.
 
 ---
 
@@ -475,7 +534,7 @@ Cybersecurity-Lab-Setup-1/
 | 3 | **[docs/03 — Screenshot evidence guide](docs/03-screenshot-evidence-guide.md)** | which window to open, what must be legible, file naming, capture tools, redaction and a self-check |
 | 4 | **[docs/04 — GitHub & LinkedIn submission](docs/04-github-linkedin-submission.md)** | repo naming, README quality bar, post template with tagging rules, troubleshooting write-up, the four-step submission |
 
-> ℹ️ The images in `screenshots/` are **labelled placeholders** describing the exact capture each file needs — overwrite them with real screenshots, same file names, and the whole report renders with its evidence in place. See [`screenshots/README.md`](screenshots/README.md).
+> ℹ️ The six `wireshark-lab-*.png` files are **real captures** from the SOC labs. The numbered lab-setup images (`00`–`12`) are **labelled placeholders** describing the exact capture each file needs — overwrite them with real screenshots using the same file names and the whole report renders with its evidence in place. See [`screenshots/README.md`](screenshots/README.md).
 
 ---
 

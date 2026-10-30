@@ -77,25 +77,35 @@ If you can only capture four, capture these — one per written requirement:
 
 ## 4 · Screenshot checklist — WK1-PMx (Wireshark / SOC labs)
 
-The hosted labs are browser-based, so **browser screenshots are the evidence**. Name them `screenshots/lab3-…png` etc.
+### ✅ Already captured (real, in `screenshots/`)
+
+| File | Lab | What it proves |
+| --- | --- | --- |
+| `wireshark-lab-1-attacker-ip.png` | 1 — Identify the Attacker's IP | `RST, ACK` burst, 8 service ports probed, `192.168.10.66` → `192.168.10.20` |
+| `wireshark-lab-2-tcp-stream-chat.png` | 2 — Follow TCP Stream 1 | `tcp.stream eq 5`, plaintext chat with temp password, guest Wi-Fi PSK, ticket |
+| `wireshark-lab-3-tcp-stream-http-download.png` | 3 — Follow TCP Stream, Part 2 | `tcp.stream eq 11`, `GET /download/report.txt` on `intranet.company.local` |
+| `wireshark-lab-4-http-credentials.png` | 4 — HTTP Plain Text Credentials | `tcp.stream eq 4`, login form + `POST /login` urlencoded body |
+| `wireshark-lab-5-bruteforce-ftp.png` | 5 — Catch the Brute Force Attacker | `tcp.stream eq 13`, 4 × `530` then `230 Login successful` |
+| `wireshark-lab-6-voip-rtp-player.png` | 6 — Catch the Call Scammer | RTP Player, 2 × G.711 PCMU, 24 s call between `.45` and `.52` |
+
+### ⬜ Still to capture (2 minutes per lab)
 
 | File name | Capture | Must show |
 | --- | --- | --- |
-| `wireshark-lab3-01-conversations.png` | Wireshark `Statistics → Conversations` (or the lab's own panel) | the outlier source IP, sorted by packets |
-| `wireshark-lab3-02-complete.png` | lab page after task 10 | “10/10” / “Lab complete” |
-| `wireshark-lab4-01-tcp-stream.png` | **Follow → TCP Stream** window | the recovered conversation text |
-| `wireshark-lab4-02-complete.png` | lab page | completion state |
-| `wireshark-lab5-01-hidden-data.png` | follow stream, **Show data as: Hex Dump** | the file magic / hidden payload |
-| `wireshark-lab5-02-complete.png` | lab page | completion state |
-| `wireshark-lab6-01-http-credentials.png` | POST packet, *HTML Form URL Encoded* expanded | `username=…&password=…` (blur if it is a real-looking credential) |
-| `wireshark-lab6-02-complete.png` | lab page | completion state |
-| `wireshark-lab7-01-bruteforce.png` | filter `http.response.code == 401` + status bar count | attempt volume, source IP |
-| `wireshark-lab7-02-complete.png` | lab page | completion state |
-| `wireshark-lab8-01-voip-play.png` | `Telephony → RTP → Stream Analysis` / VoIP Calls | caller, codec, stream selected |
-| `wireshark-lab8-02-complete.png` | lab page | completion state |
-| `local-wireshark-01-follow-stream.png` *(bonus)* | your own Kali Wireshark | proves you can do it locally, not only in a browser |
+| `wireshark-lab-1-complete.png` … `wireshark-lab-6-complete.png` | lab page after task 10 | “10/10” / “Lab complete” for **each** of the six labs |
+| `local-wireshark-01-follow-stream.png` *(bonus)* | your own Kali Wireshark | proves the skill works outside the browser |
 
-> The lab answers themselves belong in **`docs/02-wireshark-labs-step-by-step.md` §9 answer sheet**, not in the LinkedIn post.
+### Optional upgrades to the existing six
+
+| Upgrade | Why |
+| --- | --- |
+| re-shoot Lab 4 with the **HTML Form URL Encoded** pane expanded | the exact `username=`/`password=` values are the graded answer; the current shot shows the POST but the body is below the fold |
+| re-shoot Lab 3 with the exported `report.txt` open next to the stream | proves the object was recovered, not just that it was requested |
+| crop or annotate the WhatsApp / watermark overlays | cleaner, more professional for a portfolio |
+| add one SIP screenshot (`sip` → `From:` header) for Lab 6 | ties the media stream to a caller identity |
+
+> The lab answers themselves belong in **`docs/02-wireshark-labs-step-by-step.md` §10 answer sheet**, not in the LinkedIn post.
+> 🔒 These captures contain training credentials (`Tiger#4821`, `BlueHarbor77`, `Sunshine99`). They are lab values, but state that clearly if you publish them.
 
 ---
 
@@ -172,9 +182,14 @@ screenshots/
 ├── 10-clipboard-bidirectional.png
 ├── 11-clean-snapshot.png
 ├── 12-ping-test-target-vm.png
-├── wireshark-lab3-01-conversations.png
-├── wireshark-lab3-02-complete.png
-└── … (one pair per lab)
+├── 99-submission-confirmed.png
+├── wireshark-lab-1-attacker-ip.png            ← real capture
+├── wireshark-lab-2-tcp-stream-chat.png        ← real capture
+├── wireshark-lab-3-tcp-stream-http-download.png ← real capture
+├── wireshark-lab-4-http-credentials.png       ← real capture
+├── wireshark-lab-5-bruteforce-ftp.png         ← real capture
+├── wireshark-lab-6-voip-rtp-player.png        ← real capture
+└── wireshark-lab-N-complete.png               ← still to add (one per lab)
 ```
 
 **Conventions**
@@ -214,13 +229,13 @@ For side-by-side proof use an HTML table:
 </table>
 ```
 
-> ⚠️ **Current state of this repo:** the files in `screenshots/` are labelled **placeholders** so every layout/table in the README can be checked before the real evidence is captured. Replace each placeholder with the real capture of the same name — no markdown edits required. Delete `screenshots/README.md` when you are done.
+> ⚠️ **Current state of this repo:** the numbered lab-setup files in `screenshots/` are labelled **placeholders** (the six `wireshark-lab-*.png` are real captures) so every layout/table in the README can be checked before the real evidence is captured. Replace each placeholder with the real capture of the same name — no markdown edits required. Delete `screenshots/README.md` when you are done.
 
 ---
 
 ## 9 · Quality self-check before submitting
 
-- [ ] Every mandatory file in §3 exists (16 for the lab + 12 for Wireshark)
+- [ ] Every mandatory file in §3 exists (16 for the lab) and all 6 Wireshark captures + 6 completion screens
 - [ ] Each file matches its required content column — open it and re-read
 - [ ] No personal data visible; lab `10.0.0.x` addresses still visible
 - [ ] Images are PNG, under ~2 MB, readable at 100 % zoom
